@@ -1,7 +1,9 @@
+import Stripe from 'stripe'
 import cartModel from '../../../DB/model/Cart.model.js'
 import couponModel from '../../../DB/model/Coupon.model.js'
 import orderModel from '../../../DB/model/Order.model.js'
 import productModel from '../../../DB/model/Product.model.js'
+import payment from '../../utils/payment.js'
 import createInvoice from '../../utils/pdfkit.js'
 import sendEmail from '../../utils/sendEmail.js'
 import { validationCoupon } from '../coupon/coupon.controller.js'
@@ -135,6 +137,42 @@ export const createOrder = async (req, res, next) => {
     //   subject: 'Order Invoice',
     //   attachments: [{ path: 'invoice.pdf' }],
     // })
+
+    // payment
+
+    if (order.paymentMethod == 'card') {
+      if (req.body.coupon) {
+        const stripe = new Stripe(process.env.STRIPE_SERCET_KEY)
+        const coupon = await stripe.coupons.create({
+          percent_off: req.body.coupon.amount,
+        })
+        req.body.couponId = coupon.id
+      }
+      const session = await payment({
+        payment_method_types: [order.paymentMethod],
+        mode: 'payment',
+        customer_email: req.user.email,
+        metadata: {
+          orderId: order._id.toString(),
+        },
+        cancel_url: `${process.env.CANCEL_URL}?orderId=${order._id}`,
+        success_url: `${process.env.SUCCESS_URL}?orderId=${order._id}`,
+        discounts: req.body.couponId ? [{ coupon: req.body.couponId }] : [],
+        line_items: order.products.map((product) => {
+          return {
+            price_data: {
+              currency: 'EGP',
+              product_data: {
+                name: product.name,
+              },
+              unit_amount: product.productPrice * 100,
+            },
+            quantity: product.quantity,
+          }
+        }),
+      })
+      return res.status(201).json({ message: 'Done', order, session })
+    }
   }
   res.status(201).json({ message: 'Done', order })
 }
