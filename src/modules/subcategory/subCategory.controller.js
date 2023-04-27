@@ -19,7 +19,7 @@ export const createSubCategory = async (req, res, next) => {
   }
   const customId = nanoid(5)
   const { secure_url, public_id } = await cloudinary.uploader.upload(
-    data.file.path,
+    req.file.path,
     {
       folder: `${process.env.PROJECT_FOLDER}/Categories/${category.customId}/SubCatgories/${customId}`,
     },
