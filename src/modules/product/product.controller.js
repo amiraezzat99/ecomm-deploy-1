@@ -20,7 +20,6 @@ export const adProduct = async (req, res, next) => {
   if (!Category || !subCategory || !brand) {
     return next(new Error('in-valid ids', { cause: 400 }))
   }
-  createdBy
   req.body.createdBy = req.user._id
   // name
   req.body.slug = slugify(name, {
