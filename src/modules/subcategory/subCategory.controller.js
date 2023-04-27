@@ -7,7 +7,7 @@ import cloudinary from "../../utils/cloudinary.js"
 
 export const createSubCategory = async (req, res, next) => {
 
-    const { name } = data
+    const { name } = req.body
     const slug = slugify(name, '_')
     const category = await categoryModel.findById(categoryId)
     if (!category) {
