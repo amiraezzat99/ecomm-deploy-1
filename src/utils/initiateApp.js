@@ -22,13 +22,19 @@ const initApp = (app, express) => {
   // private - public
 
   //convert Buffer Data
-  app.use(express.json({}))
+  // app.use(express.json({}))
+  app.use((req, res, next) => {
+    if (req.originalUrl == '/order/webhook') {
+      next()
+    } else {
+      express.json({})(req, res, next)
+    }
+  })
   if (process.env.ENV_MODE == 'DEV') {
     app.use(cors())
     app.use(morgan('dev'))
   } else {
     app.use(async (req, res, next) => {
-
       if (!whitelist.includes(req.header('origin'))) {
         return next(new Error('Not allowed by CORS', { cause: 502 }))
       }

@@ -217,9 +217,8 @@ export const cancelOrder = async (req, res, next) => {
   }
 }
 
-export const webHook = async (req, res, next) => {
+export const webHooks = async (req, res, next) => {
   const stripe = new Stripe(process.env.STRIPE_SERCET_KEY)
-
   const sig = req.headers['stripe-signature']
 
   let event
@@ -231,130 +230,131 @@ export const webHook = async (req, res, next) => {
       process.env.endpointSecret,
     )
   } catch (err) {
-    response.status(400).send(`Webhook Error: ${err.message}`)
-    return
+    return res.status(400).send(`Webhook Error: ${err.message}`)
   }
   const { orderId } = event.data.object.metadata
+  // Handle the event
   if (event.type == 'checkout.session.completed') {
     await orderModel.findOneAndUpdate(
       { _id: orderId },
-      { orderStatus: 'confirmed' },
+      {
+        orderStatus: 'confirmed',
+      },
     )
-    return res.status(200).json({ message: 'Payment Successed' })
+    return res.status(200).json({ message: 'Done' })
   }
   await orderModel.findOneAndUpdate(
     { _id: orderId },
-    { orderStatus: 'payment failed' },
+    {
+      orderStatus: 'payment failed',
+    },
   )
-  return res.status(400).json({ message: 'Payment failed please try again' })
-
+  return res.status(400).json({ message: 'please try to pay again' })
 }
 
-// {
-//   "id": "evt_1N0X1JKK3qD4Euat1kqpTfSV",
-//   "object": "event",
-//   "api_version": "2022-11-15",
-//   "created": 1682372041,
-//   "data": {
-//     "object": {
-//       "id": "cs_test_b1iAP5jn4MMzYaY1VN7xDs8uJWIaMkOVG8PDPHFARzpRiWwRopXFz1a301",
-//       "object": "checkout.session",
-//       "after_expiration": null,
-//       "allow_promotion_codes": null,
-//       "amount_subtotal": 104000,
-//       "amount_total": 104000,
-//       "automatic_tax": {
-//         "enabled": false,
-//         "status": null
+// "id": "evt_1N0X1JKK3qD4Euat1kqpTfSV",
+// "object": "event",
+// "api_version": "2022-11-15",
+// "created": 1682372041,
+// "data": {
+//   "object": {
+//     "id": "cs_test_b1iAP5jn4MMzYaY1VN7xDs8uJWIaMkOVG8PDPHFARzpRiWwRopXFz1a301",
+//     "object": "checkout.session",
+//     "after_expiration": null,
+//     "allow_promotion_codes": null,
+//     "amount_subtotal": 104000,
+//     "amount_total": 104000,
+//     "automatic_tax": {
+//       "enabled": false,
+//       "status": null
+//     },
+//     "billing_address_collection": null,
+//     "cancel_url": "http://localhost:3000/order/cancel?orderId=6446f54c339ae4e3a7abe139",
+//     "client_reference_id": null,
+//     "consent": null,
+//     "consent_collection": null,
+//     "created": 1682371918,
+//     "currency": "egp",
+//     "currency_conversion": null,
+//     "custom_fields": [
+//     ],
+//     "custom_text": {
+//       "shipping_address": null,
+//       "submit": null
+//     },
+//     "customer": null,
+//     "customer_creation": "if_required",
+//     "customer_details": {
+//       "address": {
+//         "city": null,
+//         "country": "EG",
+//         "line1": null,
+//         "line2": null,
+//         "postal_code": null,
+//         "state": null
 //       },
-//       "billing_address_collection": null,
-//       "cancel_url": "http://localhost:3000/order/cancel?orderId=6446f54c339ae4e3a7abe139",
-//       "client_reference_id": null,
-//       "consent": null,
-//       "consent_collection": null,
-//       "created": 1682371918,
-//       "currency": "egp",
-//       "currency_conversion": null,
-//       "custom_fields": [
-//       ],
-//       "custom_text": {
-//         "shipping_address": null,
-//         "submit": null
-//       },
-//       "customer": null,
-//       "customer_creation": "if_required",
-//       "customer_details": {
-//         "address": {
-//           "city": null,
-//           "country": "EG",
-//           "line1": null,
-//           "line2": null,
-//           "postal_code": null,
-//           "state": null
+//       "email": "amiraezaatroute4@gmail.com",
+//       "name": "amira ezaat ewis",
+//       "phone": null,
+//       "tax_exempt": "none",
+//       "tax_ids": [
+//       ]
+//     },
+//     "customer_email": "amiraezaatroute4@gmail.com",
+//     "expires_at": 1682458318,
+//     "invoice": null,
+//     "invoice_creation": {
+//       "enabled": false,
+//       "invoice_data": {
+//         "account_tax_ids": null,
+//         "custom_fields": null,
+//         "description": null,
+//         "footer": null,
+//         "metadata": {
 //         },
-//         "email": "amiraezaatroute4@gmail.com",
-//         "name": "amira ezaat ewis",
-//         "phone": null,
-//         "tax_exempt": "none",
-//         "tax_ids": [
-//         ]
-//       },
-//       "customer_email": "amiraezaatroute4@gmail.com",
-//       "expires_at": 1682458318,
-//       "invoice": null,
-//       "invoice_creation": {
-//         "enabled": false,
-//         "invoice_data": {
-//           "account_tax_ids": null,
-//           "custom_fields": null,
-//           "description": null,
-//           "footer": null,
-//           "metadata": {
-//           },
-//           "rendering_options": null
-//         }
-//       },
-//       "livemode": false,
-//       "locale": null,
-//       "metadata": {
-//       },
-//       "mode": "payment",
-//       "payment_intent": "pi_3N0X1IKK3qD4Euat01XAtwHT",
-//       "payment_link": null,
-//       "payment_method_collection": "always",
-//       "payment_method_options": {
-//       },
-//       "payment_method_types": [
-//         "card"
-//       ],
-//       "payment_status": "paid",
-//       "phone_number_collection": {
-//         "enabled": false
-//       },
-//       "recovered_from": null,
-//       "setup_intent": null,
-//       "shipping_address_collection": null,
-//       "shipping_cost": null,
-//       "shipping_details": null,
-//       "shipping_options": [
-//       ],
-//       "status": "complete",
-//       "submit_type": null,
-//       "subscription": null,
-//       "success_url": "http://localhost:3000/order/success?orderId=6446f54c339ae4e3a7abe139",
-//       "total_details": {
-//         "amount_discount": 0,
-//         "amount_shipping": 0,
-//         "amount_tax": 0
-//       },
-//       "url": null
-//     }
-//   },
-//   "livemode": false,
-//   "pending_webhooks": 1,
-//   "request": {
-//     "id": null,
-//     "idempotency_key": null
-//   },
-//   "type": "checkout.session.completed"
-// }
+//         "rendering_options": null
+//       }
+//     },
+//     "livemode": false,
+//     "locale": null,
+//     "metadata": {
+//     },
+//     "mode": "payment",
+//     "payment_intent": "pi_3N0X1IKK3qD4Euat01XAtwHT",
+//     "payment_link": null,
+//     "payment_method_collection": "always",
+//     "payment_method_options": {
+//     },
+//     "payment_method_types": [
+//       "card"
+//     ],
+//     "payment_status": "paid",
+//     "phone_number_collection": {
+//       "enabled": false
+//     },
+//     "recovered_from": null,
+//     "setup_intent": null,
+//     "shipping_address_collection": null,
+//     "shipping_cost": null,
+//     "shipping_details": null,
+//     "shipping_options": [
+//     ],
+//     "status": "complete",
+//     "submit_type": null,
+//     "subscription": null,
+//     "success_url": "http://localhost:3000/order/success?orderId=6446f54c339ae4e3a7abe139",
+//     "total_details": {
+//       "amount_discount": 0,
+//       "amount_shipping": 0,
+//       "amount_tax": 0
+//     },
+//     "url": null
+//   }
+// },
+// "livemode": false,
+// "pending_webhooks": 1,
+// "request": {
+//   "id": null,
+//   "idempotency_key": null
+// },
+// "type": "checkout.session.completed"

@@ -20,11 +20,9 @@ router.patch(
   validation(cancelOrder),
   asyncHandler(controllers.cancelOrder),
 )
-
 router.post(
-  '/webHook',
+  '/webhook',
   express.raw({ type: 'application/json' }),
-  asyncHandler(controllers.webHook),
+  asyncHandler(controllers.webHooks),
 )
-
 export default router
